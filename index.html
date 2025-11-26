@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在梦里w 无限画布</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="fabric.min.js"></script>
+</head>
+<body>
+    <div id="canvas-container">
+        <div id="canvas"></div>
+        <div id="drag-overlay">释放媒体文件 (图片/视频) 📥</div>
+    </div>
+    
+    <div id="message-input-container">
+        <div class="blank-image-dropdown-container">
+            <button id="blank-image-button" class="blank-image-btn">空白图像 ▼</button>
+            <div id="blank-image-options" class="dropdown-content">
+                <a href="#" data-width="832" data-height="1216">832x1216</a>
+                <a href="#" data-width="1024" data-height="1024">1024x1024</a>
+                <a href="#" data-width="1216" data-height="832">1216x832</a>
+            </div>
+        </div>
+        <textarea id="message-input" rows="1" placeholder="输入提示词..."></textarea>
+        <button id="generate-button">生成 ✨</button>
+    </div>
+
+    <button id="settings-button" class="float-btn" title="设置">⚙️</button>
+    <input type="file" id="upload-input" accept="image/*,video/*" style="display: none;" multiple>
+    <button id="upload-button" class="float-btn" title="上传媒体">+</button>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="settings-box wide-box">
+            <div class="settings-header">
+                <h2>设置</h2>
+                <span class="close-button">&times;</span>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="basic">基础设置</button>
+                <button class="tab-btn" data-tab="custom">自定义按钮 (侧边栏)</button>
+                <button class="tab-btn" data-tab="blank-image-presets">空白图像预设</button>
+            </div>
+
+            <!-- Tab 1 -->
+            <div id="tab-basic" class="tab-content active">
+                <div class="setting-item">
+                    <label>ComfyUI 地址:</label>
+                    <input type="text" id="comfyui-address" value="http://127.0.0.1:1230">
+                </div>
+                <div style="display: flex; gap: 20px; height: 400px;">
+                    <div class="setting-item" style="flex:1; display:flex; flex-direction:column;">
+                        <label>默认【图像】生成工作流 (JSON):</label>
+                        <textarea id="workflow-json-image" style="flex:1; resize:none;" placeholder="CanvasImageInput -> CanvasImageOutput..."></textarea>
+                    </div>
+                    <div class="setting-item" style="flex:1; display:flex; flex-direction:column;">
+                        <label>默认【视频】生成工作流 (JSON):</label>
+                        <textarea id="workflow-json-video" style="flex:1; resize:none;" placeholder="CanvasVideoInput -> CanvasVideoOutput..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3 -->
+            <div id="tab-blank-image-presets" class="tab-content">
+                <h3>管理空白图像预设</h3>
+                <div id="blank-image-presets-list"></div>
+                <div class="setting-item">
+                    <input type="text" id="new-preset-width" placeholder="宽度">
+                    <span style="margin: 0 5px;">x</span>
+                    <input type="text" id="new-preset-height" placeholder="高度">
+                    <button id="add-preset-button">添加预设</button>
+                </div>
+            </div>
+
+            <!-- Tab 2 -->
+            <div id="tab-custom" class="tab-content">
+                <div class="sidebar-type-toggle">
+                    <button class="toggle-btn active" data-target="image">配置：图像侧边栏 🖼️</button>
+                    <button class="toggle-btn" data-target="video">配置：视频侧边栏 🎬</button>
+                </div>
+
+                <div class="custom-layout">
+                    <div class="custom-list-area">
+                        <label>已启用 (<span id="current-config-label">图像</span>) - 最多5个</label>
+                        <div id="active-slots-container" class="slots-row"></div>
+                        <label style="margin-top:15px;">预设库 (20个) - 拖拽到上方启用</label>
+                        <div id="preset-library-container" class="library-grid"></div>
+                    </div>
+                    <div class="custom-editor-area" id="editor-panel" style="display:none;">
+                        <h3>编辑按钮 <span id="editor-id">#1</span></h3>
+                        <div class="setting-item"><label>名称:</label><input type="text" id="edit-name"></div>
+                        <div class="setting-item">
+                            <label>图标:</label>
+                            <select id="edit-icon"></select> 
+                            <div id="edit-icon-preview"></div>
+                        </div>
+                        <div class="setting-item" style="flex:1; display:flex; flex-direction:column;">
+                            <label>工作流 JSON:</label>
+                            <textarea id="edit-workflow" style="flex:1; resize:none;"></textarea>
+                        </div>
+                        <button id="save-editor-btn" class="save-small-btn">暂存修改</button>
+                    </div>
+                    <div class="custom-editor-area empty" id="editor-empty">
+                        <p>点击左侧预设进行编辑</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-footer">
+                <button id="save-settings-button">保存并应用</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 绘图弹窗 -->
+    <div id="painter-modal" class="modal-overlay">
+        <div class="painter-window">
+            <div class="painter-header">
+                <div class="painter-tools">
+                    <div class="tool-group"><span>🎨</span><input type="color" id="brush-color" value="#ffffff"></div>
+                    <div class="tool-group"><span>🖊️</span><input type="range" id="brush-size" min="1" max="100" value="5"></div>
+                </div>
+                <div class="painter-actions">
+                    <button id="painter-cancel" class="painter-btn btn-cancel">取消</button>
+                    <button id="painter-save" class="painter-btn btn-save">保存</button>
+                </div>
+            </div>
+            <div class="canvas-wrapper">
+                <canvas id="paint-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分辨率选择气泡 -->
+    <div id="res-popover" class="popover">
+        <div class="popover-row">
+            <label>长边:</label>
+            <select id="res-max">
+                <option value="Disabled" selected>Disabled (原图)</option>
+                <option value="512">512px</option>
+                <option value="768">768px</option>
+                <option value="1024">1024px</option>
+                <option value="1280">1280px</option>
+                <option value="1536">1536px</option>
+                <option value="2048">2048px</option>
+            </select>
+        </div>
+        <div class="popover-row">
+            <label>比例:</label>
+            <select id="res-ratio">
+                <option value="Disabled" selected>Disabled (原比)</option>
+                <option value="1:1">1:1</option>
+                <option value="4:3">4:3</option>
+                <option value="3:4">3:4</option>
+                <option value="16:9">16:9</option>
+                <option value="9:16">9:16</option>
+            </select>
+        </div>
+        <div class="popover-row">
+            <label>模式:</label>
+            <select id="res-method">
+                <option value="Center Crop" selected>居中裁剪</option>
+                <option value="Stretch">拉伸</option>
+                <option value="Fill White">填充白边</option>
+            </select>
+        </div>
+        <!-- 新增 FPS Limit 选项 (默认隐藏) -->
+        <div class="popover-row" id="row-fps-limit" style="display:none;">
+            <label>FPS:</label>
+            <select id="res-fps">
+                <option value="0" selected>Default (Disabled)</option>
+                <option value="8">8 FPS</option>
+                <option value="12">12 FPS</option>
+                <option value="15">15 FPS</option>
+                <option value="24">24 FPS</option>
+                <option value="30">30 FPS</option>
+                <option value="60">60 FPS</option>
+            </select>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
