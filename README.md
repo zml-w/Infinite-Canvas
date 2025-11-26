@@ -6,6 +6,7 @@
 
 `为了实现画笔和裁剪（裁剪还没做）的功能，此项目使用到了Fabric.min.js库，非常感谢作者的开源`
 
+### 请搭配[ComfyUI-Infinite-Canvas](https://github.com/zml-w/ComfyUI-Infinite-Canvas)使用  
 
 ### 支持图像和视频的处理：
 
