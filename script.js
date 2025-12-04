@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const API_BASE_URL = 'http://localhost:3030'; // 本地服务器地址
 
-    let COMFYUI_API_URL = 'http://127.0.0.1:1230'; 
+    let COMFYUI_API_URL = 'http://127.0.0.1:8188'; 
     document.getElementById('comfyui-address').value = COMFYUI_API_URL;
     
     // 应用主题
@@ -967,9 +967,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function uploadBlob(blob, filename) {
-        const form = new FormData(); form.append("image", blob, filename); form.append("overwrite", "true");
-        const res = await fetch(`${COMFYUI_API_URL}/upload/image`, {method:"POST", body:form});
-        return (await res.json()).name;
+        try {
+            const form = new FormData(); form.append("image", blob, filename); form.append("overwrite", "true");
+            const res = await fetch(`${COMFYUI_API_URL}/upload/image`, {method:"POST", body:form});
+            if (!res.ok) {
+                throw new Error(`ComfyUI连接失败: ${res.status} ${res.statusText}`);
+            }
+            return (await res.json()).name;
+        } catch (error) {
+            console.error('上传文件到ComfyUI失败:', error);
+            throw new Error(`无法连接到ComfyUI，请检查ComfyUI是否正在运行以及地址是否正确 (当前地址: ${COMFYUI_API_URL})`);
+        }
     }
 
     // ================== 设置界面逻辑 ==================
@@ -1112,6 +1120,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // 更新自动保存间隔
                 updateAutosaveInterval();
+                
+                // 立即更新COMFYUI_API_URL变量
+                COMFYUI_API_URL = settings.comfyui_address;
                 
                 settingsModal.classList.remove('show'); 
                 alert("设置已保存");
