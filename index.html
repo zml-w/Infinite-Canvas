@@ -5,15 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>在梦里w 无限画布</title>
     <link rel="stylesheet" href="style.css">
-    <script src="fabric.min.js"></script>
 </head>
 <body>
+    <button id="toggle-canvas-controls" class="toggle-btn" title="展开/折叠控制面板">❯</button>
+    <div id="canvas-selector-container" class="collapsed">
+        <div class="canvas-controls">
+            <div class="canvas-selector-header">
+                <span class="canvas-selector-title">默认画板</span>
+                <div class="canvas-selector-actions">
+                    <button id="rename-canvas-button" class="canvas-action-btn" title="重命名画板">✏️</button>
+                    <button id="delete-canvas-button" class="canvas-action-btn" title="删除画板">🗑️</button>
+                </div>
+            </div>
+            <div id="canvas-list-container" class="canvas-list-container">
+                <!-- 画布列表将通过JavaScript动态生成 -->
+            </div>
+            <div class="canvas-footer">
+                <button id="new-canvas-button">新建画板</button>
+            </div>
+        </div>
+    </div>
     <div id="canvas-container">
         <div id="canvas"></div>
-        <div id="drag-overlay">释放媒体文件 (图片/视频) 📥</div>
+    
     </div>
     
     <div id="message-input-container">
+        <div class="seed-selection-container">
+            <label for="seed-type" class="seed-label">种子:</label>
+            <select id="seed-type" class="seed-selector">
+                <option value="random">随机</option>
+                <option value="fixed">固定</option>
+            </select>
+        </div>
         <div class="blank-image-dropdown-container">
             <button id="blank-image-button" class="blank-image-btn">空白图像 ▼</button>
             <div id="blank-image-options" class="dropdown-content">
@@ -22,13 +46,14 @@
                 <a href="#" data-width="1216" data-height="832">1216x832</a>
             </div>
         </div>
-        <textarea id="message-input" rows="1" placeholder="输入提示词..."></textarea>
-        <button id="generate-button">生成 ✨</button>
+        <textarea id="message-input" rows="1" placeholder="在此输入提示词"></textarea>
+        <button id="generate-button">▶</button>
     </div>
 
     <button id="settings-button" class="float-btn" title="设置">⚙️</button>
     <input type="file" id="upload-input" accept="image/*,video/*" style="display: none;" multiple>
     <button id="upload-button" class="float-btn" title="上传媒体">+</button>
+    <button id="focus-button" class="float-btn" title="回到焦点">🎯</button>
 
     <!-- 设置弹窗 -->
     <div id="settings-modal" class="modal-overlay">
@@ -49,6 +74,24 @@
                 <div class="setting-item">
                     <label>ComfyUI 地址:</label>
                     <input type="text" id="comfyui-address" value="http://127.0.0.1:1230">
+                </div>
+                <div class="setting-item">
+                    <label>主题:</label>
+                    <select id="theme-selector">
+                        <option value="light">亮色</option>
+                        <option value="dark">暗色</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>自动保存间隔 (秒):</label>
+                    <select id="autosave-interval">
+                        <option value="0">禁用</option>
+                        <option value="10">10秒</option>
+                        <option value="30">30秒</option>
+                        <option value="60">1分钟</option>
+                        <option value="300">5分钟</option>
+                        <option value="600">10分钟</option>
+                    </select>
                 </div>
                 <div style="display: flex; gap: 20px; height: 400px;">
                     <div class="setting-item" style="flex:1; display:flex; flex-direction:column;">
@@ -100,7 +143,11 @@
                             <label>工作流 JSON:</label>
                             <textarea id="edit-workflow" style="flex:1; resize:none;"></textarea>
                         </div>
-                        <button id="save-editor-btn" class="save-small-btn">暂存修改</button>
+                        <div class="setting-item">
+                            <label for="edit-comfy-address">ComfyUI 地址 (可选):</label>
+                            <input type="text" id="edit-comfy-address" placeholder="例如: http://127.0.0.1:8188">
+                        </div>
+
                     </div>
                     <div class="custom-editor-area empty" id="editor-empty">
                         <p>点击左侧预设进行编辑</p>
@@ -115,23 +162,7 @@
     </div>
 
     <!-- 绘图弹窗 -->
-    <div id="painter-modal" class="modal-overlay">
-        <div class="painter-window">
-            <div class="painter-header">
-                <div class="painter-tools">
-                    <div class="tool-group"><span>🎨</span><input type="color" id="brush-color" value="#ffffff"></div>
-                    <div class="tool-group"><span>🖊️</span><input type="range" id="brush-size" min="1" max="100" value="5"></div>
-                </div>
-                <div class="painter-actions">
-                    <button id="painter-cancel" class="painter-btn btn-cancel">取消</button>
-                    <button id="painter-save" class="painter-btn btn-save">保存</button>
-                </div>
-            </div>
-            <div class="canvas-wrapper">
-                <canvas id="paint-canvas"></canvas>
-            </div>
-        </div>
-    </div>
+    <!-- 绘图模态框已移除 -->
 
     <!-- 分辨率选择气泡 -->
     <div id="res-popover" class="popover">
