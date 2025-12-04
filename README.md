@@ -2,11 +2,17 @@
 
 `感觉无限画布功能很好用，但是没发现有开源的，所以做了这个简陋的工具，调用comfyui后端来使用。`
 
-`这只是一个简易版本，功能较少，另一个版本还是半成品，做好了再发，计划支持自定义http请求和llm聊天。`
+**安装：**
+ ```sh
+ git clone https://github.com/zml-w/Infinite-Canvas
+ cd Infinite-Canvas
+ npm install
+ npm start
+   ```
 
-`为了实现画笔和裁剪（裁剪还没做）的功能，此项目使用到了Fabric.min.js库，非常感谢作者的开源`
 
-### 请搭配[ComfyUI-Infinite-Canvas](https://github.com/zml-w/ComfyUI-Infinite-Canvas)使用  
+
+### 请搭配[《ComfyUI-Infinite-Canvas》](https://github.com/zml-w/ComfyUI-Infinite-Canvas)使用  
 
 ### 支持图像和视频的处理：
 
